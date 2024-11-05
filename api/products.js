@@ -24,11 +24,11 @@ export const fetchAllProducts = async () => {
   }
 };
 
-// Lấy chi tiết một sản phẩm
+// Lấy chi tiết một sản phẩm và sản phẩm liên quan
 export const fetchProductById = async (id) => {
-  const response = await fetch(`${API_URL}/products/${id}`);
+  const response = await fetch(`${API_URL}/product-detail/${id}`);
   if (!response.ok) {
-    throw new Error("Failed to fetch product");
+    throw new Error("Failed to fetch product details and related products");
   }
   return await response.json();
 };

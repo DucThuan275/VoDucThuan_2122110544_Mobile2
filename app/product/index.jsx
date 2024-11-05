@@ -6,7 +6,6 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-  View,
 } from "react-native";
 import { fetchAllProducts } from "./../../api/products";
 import { API_URL_IMAGE } from "./../../config";

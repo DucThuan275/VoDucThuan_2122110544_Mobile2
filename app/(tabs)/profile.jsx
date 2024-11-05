@@ -1,35 +1,33 @@
-import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  FlatList,
-} from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList } from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import Colors from "../../constants/Colors";
-import { Ionicons } from "@expo/vector-icons"; // Import Ionicons for icons
 
 export default function Profile() {
   const [user, setUser] = useState(null);
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const userData = await AsyncStorage.getItem("user");
-        if (userData) {
-          setUser(JSON.parse(userData));
-        }
-      } catch (error) {
-        console.error("Failed to load user data:", error);
+  // Fetch user data
+  const fetchUserData = async () => {
+    try {
+      const userData = await AsyncStorage.getItem("user");
+      if (userData) {
+        setUser(JSON.parse(userData));
       }
-    };
+    } catch (error) {
+      console.error("Failed to load user data:", error);
+    }
+  };
 
-    fetchUserData();
-  }, []);
+  // Fetch user data on screen focus
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUserData();
+    }, [])
+  );
 
   const handleLogout = async () => {
     try {
@@ -48,11 +46,20 @@ export default function Profile() {
     router.push("/product/favorite-products");
   };
 
+  const handleChangeProfile = () => {
+    router.push("/auth/change-profile");
+  };
+
   const menuItems = [
     {
       title: "Favorite Products",
       icon: "heart-outline",
       onPress: handleFavorites,
+    },
+    {
+      title: "Change Profile",
+      icon: "person-outline",
+      onPress: handleChangeProfile,
     },
     {
       title: "Change Password",
@@ -69,10 +76,7 @@ export default function Profile() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>🐾 My Profile 🐾</Text>
-      <Image
-        source={require("./../../assets/images/logo.jpg")}
-        style={styles.image}
-      />
+      <Image source={require("./../../assets/images/logo.jpg")} style={styles.image} />
 
       {user ? (
         <View style={styles.infoContainer}>
@@ -94,12 +98,7 @@ export default function Profile() {
         data={menuItems}
         renderItem={({ item }) => (
           <TouchableOpacity onPress={item.onPress} style={styles.menuItem}>
-            <Ionicons
-              name={item.icon}
-              size={24}
-              color="#333"
-              style={styles.icon}
-            />
+            <Ionicons name={item.icon} size={24} color="#333" style={styles.icon} />
             <Text style={styles.menuText}>{item.title}</Text>
           </TouchableOpacity>
         )}
@@ -136,7 +135,7 @@ const styles = StyleSheet.create({
     width: "100%",
     padding: 20,
     borderRadius: 15,
-    backgroundColor: "#FFF8E1", // Màu nền nhẹ cho thông tin
+    backgroundColor: "#FFF8E1",
     marginBottom: 20,
     elevation: 3,
     shadowColor: "#000",

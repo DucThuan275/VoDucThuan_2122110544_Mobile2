@@ -5,12 +5,14 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Image, // Import Image from react-native
 } from "react-native";
 import Colors from "../../constants/Colors";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { fetchGetCart } from "./../../api/cart";
 import { API_URL } from "./../../config";
+import { API_URL_IMAGE } from "./../../config";
 
 export default function Cart() {
   const [cartItems, setCartItems] = useState([]);
@@ -95,6 +97,10 @@ export default function Cart() {
 
   const renderItem = ({ item }) => (
     <View style={styles.itemContainer}>
+      <Image
+        source={{ uri: `${API_URL_IMAGE}/products/${item.image}` }}
+        style={styles.itemImage} // Add style for image
+      />
       <View style={styles.itemDetails}>
         <Text style={styles.itemName}>{item.name}</Text>
         <Text style={styles.itemPrice}>
@@ -131,7 +137,16 @@ export default function Cart() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Your Cart</Text>
+      <View style={styles.headerContainer}>
+        <Text style={styles.title}>Your Cart</Text>
+        <TouchableOpacity
+          onPress={() => router.push("/product")}
+          style={styles.seeMoreText}
+        >
+           <Text>See more pets.</Text>
+        </TouchableOpacity>
+      </View>
+
       {message ? <Text style={styles.messageText}>{message}</Text> : null}
       {cartItems.length === 0 ? (
         <Text style={styles.emptyCartText}>Empty Cart</Text>
@@ -143,6 +158,7 @@ export default function Cart() {
           contentContainerStyle={styles.list}
         />
       )}
+
       <View style={styles.totalContainer}>
         <Text style={styles.totalText}>Total: ${totalAmount}</Text>
         <TouchableOpacity
@@ -166,8 +182,19 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     color: "#333",
-    marginBottom: 20,
   },
+  headerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20, // Adjust as needed
+  },
+  seeMoreText: {
+    fontSize: 18,
+    color: Colors.PRIMARY,
+    textDecorationLine: "underline", 
+  },
+
   messageText: {
     color: "red",
     fontWeight: "bold",
@@ -193,6 +220,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
+  },
+  itemImage: {
+    width: 50, // Adjust as necessary
+    height: 50, // Adjust as necessary
+    borderRadius: 5, // Optional: adds rounded corners to the image
+    marginRight: 15, // Space between image and text
   },
   itemDetails: {
     flex: 1,
@@ -258,13 +291,16 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   checkoutButton: {
-    backgroundColor: Colors.PRIMARY,
-    borderRadius: 15,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    width: "40%",
+    backgroundColor: "#ff4d4d",
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
   checkoutButtonText: {
     color: "#fff",
-    fontWeight: "600",
+    fontSize: 20,
+    fontFamily: "outfit-medium",
   },
 });

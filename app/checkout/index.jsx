@@ -6,24 +6,29 @@ import {
   FlatList,
   TextInput,
   TouchableOpacity,
+  Image,
+  ScrollView,
+  Linking,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { fetchGetCart } from "./../../api/cart";
-import { fetchCheckout } from "./../../api/checkout";
+import { fetchCheckout, fetchCheckoutVNPAY } from "./../../api/checkout";
 import { useRouter } from "expo-router";
+import { API_URL_IMAGE } from "./../../config";
 
 export default function Checkout() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter(); // Gọi useRouter bên trong component
+  const router = useRouter();
   const [userData, setUserData] = useState({
     name: "",
     email: "",
     phone: "",
     id: "",
-    address: "", // Thêm trường địa chỉ vào state
+    address: "",
   });
-  const [successMessage, setSuccessMessage] = useState(""); // Trạng thái để quản lý thông báo thành công
+  const [successMessage, setSuccessMessage] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
 
   useEffect(() => {
     loadCart();
@@ -55,7 +60,7 @@ export default function Checkout() {
         email: user.email,
         phone: user.phone,
         id: user.id,
-        address: "", // Địa chỉ có thể thêm sau
+        address: "",
       });
     }
   };
@@ -70,10 +75,36 @@ export default function Checkout() {
     };
 
     try {
-      const response = await fetchCheckout(orderData);
-      setSuccessMessage(`Thanh toán thành công! Mã đơn hàng: ${response.order_id}`);
-      setCartItems([]);
-      router.push("checkout/checkout-success")
+      let response;
+      if (paymentMethod === "online") {
+        response = await fetchCheckoutVNPAY(orderData);
+      } else {
+        response = await fetchCheckout(orderData);
+      }
+
+      const data = await response.json();
+
+      console.log("API response:", data);
+
+      if (response.ok) {
+        setSuccessMessage(
+          `Thanh toán thành công! Mã đơn hàng: ${data.order_id}`
+        );
+        setCartItems([]);
+
+        if (paymentMethod === "online") {
+          Linking.openURL(data.url); // Open the VNPAY URL
+          setTimeout(() => {
+            router.push("checkout/checkout-success");
+          }, 3000); // Delay before navigating (3 seconds)
+        } else {
+          router.push("checkout/checkout-success");
+        }
+      } else {
+        setSuccessMessage(
+          "Lỗi thanh toán: " + (data.message || "Không rõ lỗi.")
+        );
+      }
     } catch (error) {
       console.error("Checkout error:", error);
       setSuccessMessage("Lỗi thanh toán: " + error.message);
@@ -82,8 +113,16 @@ export default function Checkout() {
 
   const renderCartItem = ({ item }) => (
     <View style={styles.cartItem}>
-      <Text style={styles.cartItemName}>{item.name}</Text>
-      <Text style={styles.cartItemPrice}>${item.pricebuy} x {item.quantity}</Text>
+      <Image
+        source={{ uri: `${API_URL_IMAGE}/products/${item.image}` }}
+        style={styles.cartItemImage}
+      />
+      <View style={styles.cartItemDetails}>
+        <Text style={styles.cartItemName}>{item.name}</Text>
+        <Text style={styles.cartItemPrice}>
+          ${item.pricebuy} x {item.quantity}
+        </Text>
+      </View>
     </View>
   );
 
@@ -97,7 +136,7 @@ export default function Checkout() {
   );
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Checkout</Text>
 
       <FlatList
@@ -107,7 +146,31 @@ export default function Checkout() {
         style={styles.cartList}
       />
 
-      <Text style={styles.label}>Tổng tiền: ${totalAmount}</Text>
+      <Text style={styles.label}>Total: ${totalAmount}</Text>
+
+      <Text style={styles.label}>Payment Method:</Text>
+      <TouchableOpacity
+        style={styles.paymentButton}
+        onPress={() => setPaymentMethod("cash")}
+      >
+        <Text
+          style={paymentMethod === "cash" ? styles.selected : styles.unselected}
+        >
+          Cash on Delivery
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.paymentButton}
+        onPress={() => setPaymentMethod("online")}
+      >
+        <Text
+          style={
+            paymentMethod === "online" ? styles.selected : styles.unselected
+          }
+        >
+          Online Payment
+        </Text>
+      </TouchableOpacity>
 
       <TextInput
         style={styles.input}
@@ -123,13 +186,13 @@ export default function Checkout() {
       />
       <TextInput
         style={styles.input}
-        placeholder="Số điện thoại"
+        placeholder="Phone Number"
         value={userData.phone}
         onChangeText={(text) => setUserData({ ...userData, phone: text })}
       />
       <TextInput
         style={styles.input}
-        placeholder="Địa chỉ"
+        placeholder="Address"
         value={userData.address}
         onChangeText={(text) => setUserData({ ...userData, address: text })}
       />
@@ -141,13 +204,13 @@ export default function Checkout() {
       {successMessage ? (
         <Text style={styles.successMessage}>{successMessage}</Text>
       ) : null}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     padding: 20,
     backgroundColor: "#f9f9f9",
   },
@@ -162,10 +225,19 @@ const styles = StyleSheet.create({
   },
   cartItem: {
     flexDirection: "row",
-    justifyContent: "space-between",
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
+    alignItems: "center",
+  },
+  cartItemImage: {
+    width: 100,
+    height: 100,
+    marginRight: 15,
+    borderRadius: 15,
+  },
+  cartItemDetails: {
+    flex: 1,
   },
   cartItemName: {
     fontSize: 16,
@@ -200,6 +272,21 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "600",
+  },
+  paymentButton: {
+    padding: 15,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    marginBottom: 10,
+    alignItems: "center",
+  },
+  selected: {
+    color: "#28a745",
+    fontWeight: "bold",
+  },
+  unselected: {
+    color: "#333",
   },
   successMessage: {
     marginTop: 20,

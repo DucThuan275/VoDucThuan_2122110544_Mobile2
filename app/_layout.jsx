@@ -30,7 +30,19 @@ export default function RootLayout() {
       <Stack.Screen
         name="auth/change-password"
         options={{
-          title: "Change Password",
+          title: "Change Password Settings",
+        }}
+      />
+       <Stack.Screen
+        name="auth/forgot-password"
+        options={{
+          title: "Forgot Your Password",
+        }}
+      />
+      <Stack.Screen
+        name="auth/change-profile"
+        options={{
+          title: "Change Profile Settings",
         }}
       />
       <Stack.Screen

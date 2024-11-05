@@ -94,7 +94,7 @@ export default function AuthScreen() {
         source={require("./../../assets/images/login.png")}
         style={styles.image}
       />
-      <Text style={styles.title}>{isLogin ? "Login" : "Register"}</Text>
+      <Text style={styles.title}>{isLogin ? "🐾 Login 🐾" : "🐾 Register 🐾"}</Text>
 
       {!isLogin && (
         <>
@@ -165,6 +165,9 @@ export default function AuthScreen() {
             : "Already have an account? Login"}
         </Text>
       </TouchableOpacity>
+      <TouchableOpacity onPress={() => router.push("/auth/forgot-password")}>
+        <Text style={styles.ForgotText}>Forgot your password? </Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -193,7 +196,6 @@ const styles = StyleSheet.create({
     width: "100%",
     padding: 15,
     borderRadius: 10,
-    backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#ddd",
     marginBottom: 15,
@@ -214,12 +216,26 @@ const styles = StyleSheet.create({
   },
   switchText: {
     color: Colors.PRIMARY,
-    fontSize: 16,
+    fontSize: 18,
+    textAlign: "center",
+  },
+  
+  ForgotText: {
+    color: "red",
+    fontSize: 18,
     textAlign: "center",
   },
   message: {
     marginVertical: 10,
-    fontSize: 16,
+    fontSize: 20,
+    padding: 10,
     textAlign: "center",
+    backgroundColor: Colors.WHITE,
+    borderRadius: 10,
+    backgroundColor: "#d4edda",
+    padding: 10,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
